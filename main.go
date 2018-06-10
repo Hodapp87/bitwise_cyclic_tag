@@ -11,21 +11,22 @@ import (
 // Based on:
 // https://esolangs.org/wiki/Bitwise_Cyclic_Tag
 
-func bct(data []int, prog []int) {
+func bct(data []int, prog []int, limit int) int {
 	l := len(prog)
 	
 	// Program bit pointer:
 	p := 0
-	
-	for i := 0; len(data) > 0; i++ {
+
+	var i int
+	for i = 0; len(data) > 0 && i < limit; i++ {
 		cmd := prog[p]
 		p = (p + 1) % l
 		if cmd == 0 {
-			fmt.Printf("data=%v cmd=0\n", data)
+			//fmt.Printf("data=%v cmd=0\n", data)
 			data = data[1:]
 		} else {
 			x := prog[p]
-			fmt.Printf("data=%v cmd=1%d\n", data, x)
+			//fmt.Printf("data=%v cmd=1%d\n", data, x)
 			p = (p + 1) % l
 			if data[0] == 1 {
 				data = append(data, x)
@@ -33,6 +34,8 @@ func bct(data []int, prog []int) {
 		}
 		
 	}
+
+	return i
 }
 
 func self_bct_2(prog1 []int, prog2 []int, limit int) (bool, int) {
@@ -138,12 +141,16 @@ func b2i(bits *[]int) int {
 
 func main() {
 
-	size := uint(12)
+	size := uint(10)
 
-	img := image.NewGray(image.Rect(0, 0, 1 << size, 1 << size))
+	img := image.NewRGBA(image.Rect(0, 0, 1 << size, 1 << size))
 
 	var g1 []int
 	var g2 []int
+
+	n_halt := 0
+	steps_sum := 0
+	steps_max := 0
 	
 	b1 := make([]int, size)
 	for more1 := true; more1; more1 = !increment(&b1) {
@@ -152,14 +159,39 @@ func main() {
 		
 		for more2 := true; more2; more2 = !increment(&b2) {
 			g2 = gray_code(&b2)
-			_, steps := self_bct_2(g1, g2, 255)
+			halt, steps := self_bct_2(g1, g2, 1000)
+			if halt {
+				n_halt++
+				steps_sum += steps
+				if steps > steps_max {
+					steps_max = steps
+				}
+			}
+			// Not especially interesting:
+			// steps := bct(g1, g2, 255)
 			//_, steps2 := self_bct_2(b1, b2, 255)
 			x1 := b2i(&g1)
 			x2 := b2i(&g2)
 			//fmt.Printf("%d %d (%v=%v %v=%v): %v %v %s\n", x1, x2, b1, g1, b2, g2, steps, steps2)
-			img.SetGray(x1, x2, color.Gray { uint8(steps) })
+			h := uint8(0)
+			s := uint8(0)
+			if halt {
+				h = 255
+				s = uint8(255 * steps / 40)
+			}
+			c := color.RGBA {
+				h,
+				s,
+				s,
+				255,
+			}
+			img.Set(x1, x2, c)
 		}
 	}
+
+	steps_avg := float32(steps_sum) / float32(n_halt)
+	fmt.Printf("Average halt time: %.1f\n", steps_avg)
+	fmt.Printf("Max halt time: %d\n", steps_max)
 	
 	f, err := os.Create("image.png")
 	if err != nil {

@@ -24,6 +24,12 @@ representation of x and the N-bit representation of y (for x and y
 both being unsigned integers).  The value of that pixel (x, y) comes
 from the number of steps taken for that self-BCT to halt (if it does).
 
+## Misc. notes
+
+- There is something chaotic here, but it seems to be too disordered
+  (at least with the current way I'm visualizing it) for much
+  interest.  Regardless, it seems to have detail at every scale.
+
 ## To-do
 
 - Look at the patterns in the example 1024x1024 image.  There are
