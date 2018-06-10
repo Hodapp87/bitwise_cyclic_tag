@@ -35,13 +35,15 @@ func bct(data []int, prog []int) {
 	}
 }
 
-func self_bct_2(prog1 []int, prog2 []int, limit int) bool {
+func self_bct_2(prog1 []int, prog2 []int, limit int) int {
 	
 	// Program bit pointer:
 	p1 := 0
 	p2 := 0
+
+	i := 0
 	
-	for i := 0; len(prog1) > 0 && len(prog2) > 0 && i < limit; i++ {
+	for ; len(prog1) > 0 && len(prog2) > 0 && i < limit; i++ {
 
 		cmd1 := prog1[p1]
 		if cmd1 == 0 {
@@ -82,7 +84,7 @@ func self_bct_2(prog1 []int, prog2 []int, limit int) bool {
 		}
 	}
 
-	return len(prog1) == 0 || len(prog2) == 0
+	return i // len(prog1) == 0 || len(prog2) == 0
 }
 
 func increment(bits *[]int) bool {
@@ -112,9 +114,6 @@ func b2i(bits *[]int) int {
 
 func main() {
 
-	halts := 0
-	total := 0
-
 	var max_bits uint
 	max_bits = 10
 
@@ -127,26 +126,17 @@ func main() {
 				b2 := make([]int, len2)
 				
 				for more2 := true; more2; {
-					halt := self_bct_2(b1, b2, 200)
-					if halt {
-						halts += 1
-					}
-					total += 1
+					steps := self_bct_2(b1, b2, 255)
 					x1 := b2i(&b1)
 					x2 := b2i(&b2)
 					//fmt.Printf("%d %d %d %d (%v %v): %v\n", len1, len2, x1, x2, b1, b2, halt)
-					if halt {
-						img.SetGray(x1, x2, color.Gray { 255 })
-					} else {
-						img.SetGray(x1, x2, color.Gray { 0 })
-					}
+					img.SetGray(x1, x2, color.Gray { uint8(steps) })
 					more2 = !increment(&b2)
 				}
 				more = !increment(&b1)
 			}
 		}
 	}
-	fmt.Printf("%.2f%% halted (%d/%d)\n", 100.0 * float64(halts) / float64(total), halts, total)
 
 	f, err := os.Create("image.png")
 	if err != nil {
