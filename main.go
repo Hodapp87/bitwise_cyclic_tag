@@ -35,7 +35,7 @@ func bct(data []int, prog []int) {
 	}
 }
 
-func self_bct_2(prog1 []int, prog2 []int, limit int) int {
+func self_bct_2(prog1 []int, prog2 []int, limit int) (bool, int) {
 	
 	// Program bit pointer:
 	p1 := 0
@@ -84,7 +84,31 @@ func self_bct_2(prog1 []int, prog2 []int, limit int) int {
 		}
 	}
 
-	return i // len(prog1) == 0 || len(prog2) == 0
+	return len(prog1) == 0 || len(prog2) == 0, i
+}
+
+// I mis-read and wrote this thinking it would produce Gray codes, but
+// actually it converts *from* Gray codes...
+func from_gray_code(bits *[]int) []int {
+
+	gray := make([]int, len(*bits))
+	x := 0
+	l := len(*bits) - 1
+	for i := l; i >= 0; i-- {
+		x ^= (*bits)[i]
+		gray[i] = x
+	}
+	return gray
+}
+
+func gray_code(bits *[]int) []int {
+	gray := make([]int, len(*bits))
+	m := len(*bits) - 1
+	for i := 0; i < m; i++ {
+		gray[i] = (*bits)[i] ^ (*bits)[i + 1]
+	}
+	gray[m] = (*bits)[m]
+	return gray
 }
 
 func increment(bits *[]int) bool {
@@ -107,37 +131,36 @@ func b2i(bits *[]int) int {
 	m := 1
 	for _,b := range *bits {
 		v += b*m
-		m *= 2
+		m <<= 1
 	}
 	return v
 }
 
 func main() {
 
-	var max_bits uint
-	max_bits = 10
+	size := uint(12)
 
-	img := image.NewGray(image.Rect(0, 0, 1 << max_bits, 1 << max_bits))
+	img := image.NewGray(image.Rect(0, 0, 1 << size, 1 << size))
 
-	for len1 := uint(1); len1 <= max_bits; len1 += 1 {
-		for len2 := uint(1); len2 <= max_bits; len2 += 1 {
-			b1 := make([]int, len1)
-			for more := true; more; {
-				b2 := make([]int, len2)
-				
-				for more2 := true; more2; {
-					steps := self_bct_2(b1, b2, 255)
-					x1 := b2i(&b1)
-					x2 := b2i(&b2)
-					//fmt.Printf("%d %d %d %d (%v %v): %v\n", len1, len2, x1, x2, b1, b2, halt)
-					img.SetGray(x1, x2, color.Gray { uint8(steps) })
-					more2 = !increment(&b2)
-				}
-				more = !increment(&b1)
-			}
+	var g1 []int
+	var g2 []int
+	
+	b1 := make([]int, size)
+	for more1 := true; more1; more1 = !increment(&b1) {
+		g1 = gray_code(&b1)
+		b2 := make([]int, size)
+		
+		for more2 := true; more2; more2 = !increment(&b2) {
+			g2 = gray_code(&b2)
+			_, steps := self_bct_2(g1, g2, 255)
+			//_, steps2 := self_bct_2(b1, b2, 255)
+			x1 := b2i(&g1)
+			x2 := b2i(&g2)
+			//fmt.Printf("%d %d (%v=%v %v=%v): %v %v %s\n", x1, x2, b1, g1, b2, g2, steps, steps2)
+			img.SetGray(x1, x2, color.Gray { uint8(steps) })
 		}
 	}
-
+	
 	f, err := os.Create("image.png")
 	if err != nil {
 		log.Fatal(err)

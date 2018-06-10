@@ -32,5 +32,10 @@ from the number of steps taken for that self-BCT to halt (if it does).
   bits that change at once.  I need to use something like a [Gray
   code](https://en.wikipedia.org/wiki/Gray_code) so that from one
   coordinate to an adjacent one, only a single bit ever changes.
+- Figure out why the results appear to be nearly identical between
+  normal inputs and Gray code converted inputs.  In the 12-bit case,
+  they seem to be literally identical.  I am trying to figure out if I
+  did something wrong, or if this is some sort of normal property of
+  the system.
 - Visualize things a bit better.  It should be clearer that a given
   configuration halts, versus seemingly diverges.
