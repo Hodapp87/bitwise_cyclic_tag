@@ -116,15 +116,13 @@ func main() {
 	total := 0
 
 	var max_bits uint
-	max_bits = 12
+	max_bits = 10
 
 	img := image.NewGray(image.Rect(0, 0, 1 << max_bits, 1 << max_bits))
 
-	len1 := uint(1)
-	for ; len1 <= max_bits; len1 += 1 {
-		len1b := len1
-		for len2 := 1; len1b > 1; len2 += 1 {
-			b1 := make([]int, len1b)
+	for len1 := uint(1); len1 <= max_bits; len1 += 1 {
+		for len2 := uint(1); len2 <= max_bits; len2 += 1 {
+			b1 := make([]int, len1)
 			for more := true; more; {
 				b2 := make([]int, len2)
 				
@@ -136,7 +134,7 @@ func main() {
 					total += 1
 					x1 := b2i(&b1)
 					x2 := b2i(&b2)
-					fmt.Printf("%d %d %d %d (%v %v): %v\n", len1b, len2, x1, x2, b1, b2, halt)
+					//fmt.Printf("%d %d %d %d (%v %v): %v\n", len1, len2, x1, x2, b1, b2, halt)
 					if halt {
 						img.SetGray(x1, x2, color.Gray { 255 })
 					} else {
@@ -146,7 +144,6 @@ func main() {
 				}
 				more = !increment(&b1)
 			}
-			len1b -= 1
 		}
 	}
 	fmt.Printf("%.2f%% halted (%d/%d)\n", 100.0 * float64(halts) / float64(total), halts, total)
