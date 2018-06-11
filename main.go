@@ -53,9 +53,11 @@ func self_bct_2(prog1 []int, prog2 []int, limit int) (bool, int) {
 			//fmt.Printf("cmd1=0, p1(%d)=%v p2(%d)=%v\n", p1, prog1, p2, prog2)
 			p1 = (p1 + 1) % len(prog1)
 			prog2 = prog2[1:]
-			if p2 > 0 {
-				p2 -= 1
+			if len(prog2) == 0 {
+				break
 			}
+
+			p2 = (p2 + len(prog2) - 1) % len(prog2)
 		} else {
 			x := prog1[(p1 + 1) % len(prog1)]
 			//fmt.Printf("cmd1=1%d, p1(%d)=%v p2(%d)=%v\n", x, p1, prog1, p2, prog2)
@@ -65,23 +67,22 @@ func self_bct_2(prog1 []int, prog2 []int, limit int) (bool, int) {
 			}
 		}
 
-		if len(prog2) == 0 {
-			break
-		}
-
 		cmd2 := prog2[p2]
-		if cmd2 == 0 {
+		if cmd2 == 1 {
 			//fmt.Printf("cmd2=0, p1(%d)=%v p2(%d)=%v\n", p1, prog1, p2, prog2)
 			p2 = (p2 + 1) % len(prog2)
 			prog1 = prog1[1:]
-			if p1 > 0 {
-				p1 -= 1
+
+			if len(prog1) == 0 {
+				break
 			}
+			
+			p1 = (p1 + len(prog1) - 1) % len(prog1)
 		} else {
 			x := prog2[(p2 + 1) % len(prog2)]
 			//fmt.Printf("cmd2=1%d, p1(%d)=%v p2(%d)=%v\n", x, p1, prog1, p2, prog2)
 			p2 = (p2 + 2) % len(prog2)
-			if prog1[0] == 1 {
+			if prog1[0] == 0 {
 				prog1 = append(prog1, x)
 			}
 		}
@@ -139,6 +140,12 @@ func b2i(bits *[]int) int {
 	return v
 }
 
+func reverse(l *[]int) {
+    for i, j := 0, len(*l)-1; i < j; i, j = i+1, j-1 {
+        (*l)[i], (*l)[j] = (*l)[j], (*l)[i]
+    }
+}
+
 func main() {
 
 	size := uint(10)
@@ -159,6 +166,7 @@ func main() {
 		
 		for more2 := true; more2; more2 = !increment(&b2) {
 			g2 = gray_code(&b2)
+			/*
 			halt, steps := self_bct_2(g1, g2, 1000)
 			if halt {
 				n_halt++
@@ -167,22 +175,33 @@ func main() {
 					steps_max = steps
 				}
 			}
+            */
 			// Not especially interesting:
 			// steps := bct(g1, g2, 255)
 			//_, steps2 := self_bct_2(b1, b2, 255)
+			//reverse(&g1)
+			//reverse(&g2)
 			x1 := b2i(&g1)
 			x2 := b2i(&g2)
 			//fmt.Printf("%d %d (%v=%v %v=%v): %v %v %s\n", x1, x2, b1, g1, b2, g2, steps, steps2)
 			h := uint8(0)
 			s := uint8(0)
+			/*
 			if halt {
 				h = 255
-				s = uint8(255 * steps / 40)
+				s = uint8(255 * (steps - int(size)) / 40)
+			}
+            */
+			for _,b := range b1 {
+				h += uint8(b)
+			}
+			for _,b := range b2 {
+				s += uint8(b)
 			}
 			c := color.RGBA {
-				h,
-				s,
-				s,
+				h * 10,
+				s * 10,
+				s * 10,
 				255,
 			}
 			img.Set(x1, x2, c)
@@ -193,7 +212,8 @@ func main() {
 	fmt.Printf("Average halt time: %.1f\n", steps_avg)
 	fmt.Printf("Max halt time: %d\n", steps_max)
 	
-	f, err := os.Create("image.png")
+	//f, err := os.Create("selfbct2_rev_graycode_1024.png")
+	f, err := os.Create("binary_ones.png")
 	if err != nil {
 		log.Fatal(err)
 	}

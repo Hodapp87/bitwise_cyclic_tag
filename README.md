@@ -30,6 +30,20 @@ from the number of steps taken for that self-BCT to halt (if it does).
   (at least with the current way I'm visualizing it) for much
   interest.  Regardless, it seems to have detail at every scale.
 
+## Test results
+
+(may or may not be committed)
+
+### selfbct2_graycode_1024.png
+
+1024x1024 render.  Both axes, Gray code encoded.  Black = didn't halt
+in 1000 steps.  White level = proportional to number of steps to halt.
+Dual self-BCT variant.  Definitely detects divisions of 2 somehow (see
+the white lines by the top).
+
+Having some locality issues though.  Note the patches of black that
+seem to occur in particular subdivisions.
+
 ## To-do
 
 - Look at the patterns in the example 1024x1024 image.  There are
