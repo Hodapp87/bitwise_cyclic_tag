@@ -3,6 +3,8 @@
 import numpy as np
 import PIL.Image
 
+import random
+
 class RepeatCA(object):
     def __init__(self, state, rule):
         self.state = state
@@ -66,8 +68,8 @@ class CA(object):
         # in space, and be periodic in time with period of <= 2^N):
         rca = RepeatCA(bg, rule=rule)
         period, traj = rca.get_trajectory()
-        print("Background input: periodic in space with {} and in time with {}".format(
-            rca.state_len, period))
+        #print("Background input: periodic in space with {} and in time with {}".format(
+        #    rca.state_len, period))
         self.bg_traj = traj
         self.bg_len = rca.state_len
         self.bg_period = period
@@ -101,7 +103,7 @@ class CAState(object):
         self.bg_len = bg_len
         self.horizon = len(state)
     def cell(self, idx):
-        l = len(self.state)
+        l = self.horizon
         # 0 is the middle of self.state
         idx2 = (l // 2) - idx
         if idx2 < 0 or idx2 >= l:
@@ -124,6 +126,14 @@ class CAState(object):
         return np.array([
             self.cell(i) for i in range(-width//2, width//2)
         ])
+    def compare(self, state):
+        if self.bg != state.bg:
+            return False
+        m = max(self.horizon, state.horizon)
+        for i in range(-(m // 2), (m // 2) + 1):
+            if self.cell(i) != state.cell(i):
+                return False
+        return True
     
 def test_run(rule=110, iters=25, state=[1], disp_size=60, shift=0, bg=[0]):
     c = CA(rule=rule, state=state, bg=bg)
@@ -140,9 +150,47 @@ def test_run_arr(rule=110, iters=500, state=[1], disp_size=500, bg=[0]):
         arr[i, :] = s.to_arr(disp_size)
         s,b = c.iterate(s,b)
     if s.equals_bg():
-        print("State equals background")
+        print("Final state equals background")
     #import pdb; pdb.set_trace()
     return arr
+
+def test_run_periodic(rule=110, iters=1000, state=[1], bg=[0], max_period=None):
+    history = []
+    c = CA(rule=rule, state=state, bg=bg)
+    s,b = c.get_initial()
+    periodic = None
+    for i in range(iters):
+        if max_period is None:
+            search_rng = range(i-1, -1, -1)
+        else:
+            search_rng = range(i-1, max(-1, (i-max_period)-1), -1)
+        for j in search_rng:
+            s2 = history[j]
+            if s.compare(s2):
+                periodic = (i, j)
+                break
+        history.append(s)
+        if periodic is not None:
+            break
+        s,b = c.iterate(s,b)
+    if periodic is not None:
+        i,j = periodic
+        return i, j, history[i], history[j], s.equals_bg()
+    else:
+        return None
+
+def periodic_search(maxlength=80, max_period=20, accum=[]):
+    num = 0
+    while True:
+        num += 1
+        length = random.randrange(6, maxlength+1)
+        seed = [random.randrange(2) for _ in range(length)]
+        #print(seed)
+        p = test_run_periodic(rule=110, bg=ether_bg, state=seed, max_period=max_period)
+        if p is not None:
+            i, j, _, _, _ = p
+            print("{}: period {}, repeat {} -> {}, seed {}".format(num, i-j, i, j, seed))
+            accum.append((p, seed))
 
 def arr2img(arr, fname):
     img = PIL.Image.fromarray(arr * 255)
@@ -150,3 +198,19 @@ def arr2img(arr, fname):
 
 # Ether:
 ether_bg = [0,0,0,1,0,0,1,1,0,1,1,1,1,1]
+
+# Example seeds that are periodic:
+seeds = [
+    [0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1],
+    [1, 0, 1, 0, 1, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0],
+    [1, 1, 0, 0, 1, 1, 1, 1],
+    [1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1],
+    [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0],
+    [0, 0, 1, 0, 1, 1, 0],
+    [0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0], # First that is periodic but *not* just with background pattern.  Also, fairly sure I could separate out parts of this.
+]
+
+# I think equals_bg() is giving incorrect answers sometimes
+# TODO: Generate visualization of looping ones?
